@@ -1,0 +1,37 @@
+[1mdiff --git a/test_electrical.py b/test_electrical.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..ffeea9d[m
+[1m--- /dev/null[m
+[1m+++ b/test_electrical.py[m
+[36m@@ -0,0 +1,31 @@[m
+[32m+[m[32mimport math[m
+[32m+[m
+[32m+[m[32mfrom electrical import ([m
+[32m+[m[32m    calculate_current,[m
+[32m+[m[32m    calculate_power,[m
+[32m+[m[32m    calculate_resistance,[m
+[32m+[m[32m    calculate_voltage,[m
+[32m+[m[32m    total_resistance_series,[m
+[32m+[m[32m)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef test_calculate_voltage():[m
+[32m+[m[32m    assert calculate_voltage(2, 5) == 10.0[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef test_calculate_current():[m
+[32m+[m[32m    assert calculate_current(12, 4) == 3.0[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef test_calculate_resistance():[m
+[32m+[m[32m    assert calculate_resistance(24, 6) == 4.0[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef test_calculate_power():[m
+[32m+[m[32m    assert calculate_power(10, 2) == 20.0[m
+[32m+[m[32m    assert math.isclose(calculate_power(12, 3, resistance=4, formula="current_resistance"), 36.0)[m
+[32m+[m[32m    assert math.isclose(calculate_power(12, 3, resistance=3, formula="voltage_resistance"), 48.0)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef test_total_resistance_series():[m
+[32m+[m[32m    assert total_resistance_series([10, 20, 30]) == 60.0[m
