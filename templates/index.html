@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 02: BJT DC Bias Web App</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <div class="brand">
+        <svg class="chip-icon" viewBox="0 0 48 48" aria-hidden="true">
+          <g stroke="#0f766e" stroke-width="2" stroke-linecap="round">
+            <line x1="16" y1="4" x2="16" y2="11"></line>
+            <line x1="24" y1="4" x2="24" y2="11"></line>
+            <line x1="32" y1="4" x2="32" y2="11"></line>
+            <line x1="16" y1="37" x2="16" y2="44"></line>
+            <line x1="24" y1="37" x2="24" y2="44"></line>
+            <line x1="32" y1="37" x2="32" y2="44"></line>
+            <line x1="4" y1="16" x2="11" y2="16"></line>
+            <line x1="4" y1="24" x2="11" y2="24"></line>
+            <line x1="4" y1="32" x2="11" y2="32"></line>
+            <line x1="37" y1="16" x2="44" y2="16"></line>
+            <line x1="37" y1="24" x2="44" y2="24"></line>
+            <line x1="37" y1="32" x2="44" y2="32"></line>
+          </g>
+          <rect x="11" y="11" width="26" height="26" rx="5" fill="#0f766e"></rect>
+          <rect x="18" y="18" width="12" height="12" rx="2" fill="#d9f3ef"></rect>
+        </svg>
+        <div>
+          <h1>Lab 02: BJT DC Bias Web App</h1>
+          <p class="subtitle">ENG29 2121 – Common Emitter (Voltage Divider Bias)</p>
+        </div>
+      </div>
+      <div class="course-badge">
+        <span class="code-icon" aria-hidden="true">&lt;/&gt;</span>
+        Computer Programming for Electrical Engineers
+      </div>
+    </header>
+
+    <section class="dashboard">
+      <div class="card inputs-card">
+        <h2><span class="icon" aria-hidden="true">⚙</span> Input Parameters</h2>
+        <form method="post" class="input-form">
+          {% for field in fields %}
+          <div class="input-row">
+            <label for="{{ field }}">{{ labels[field] }}</label>
+            <div class="input-control">
+              <input id="{{ field }}" name="{{ field }}" value="{{ values[field] }}"
+                     type="number" step="any" required>
+              <span class="unit">{{ units[field] }}</span>
+            </div>
+            {% if errors[field] %}
+            <p class="field-error">{{ errors[field] }}</p>
+            {% endif %}
+          </div>
+          {% endfor %}
+          <button type="submit" class="calculate-button">Calculate DC Bias</button>
+        </form>
+      </div>
+
+      <div class="card circuit-card">
+        <h2><span class="icon" aria-hidden="true">⌁</span> Circuit: Common-Emitter Amplifier</h2>
+        {% include "_schematic.html" %}
+      </div>
+
+      <div class="card results-card">
+        <h2><span class="icon" aria-hidden="true">▥</span> DC Bias Results</h2>
+        {% if result %}
+        <table class="results-table">
+          <tbody>
+            <tr><th>V<sub>B</sub></th><td>{{ "%.2f"|format(result.vb) }} V</td></tr>
+            <tr><th>V<sub>E</sub></th><td>{{ "%.2f"|format(result.ve) }} V</td></tr>
+            <tr><th>V<sub>C</sub></th><td>{{ "%.2f"|format(result.vc) }} V</td></tr>
+            <tr><th>V<sub>CE</sub></th><td>{{ "%.2f"|format(result.vce) }} V</td></tr>
+            <tr><th>I<sub>B</sub></th><td>{{ "%.1f"|format(result.ib_a * 1e6) }} µA</td></tr>
+            <tr><th>I<sub>C</sub></th><td>{{ "%.2f"|format(result.ic_a * 1e3) }} mA</td></tr>
+            <tr><th>I<sub>E</sub></th><td>{{ "%.2f"|format(result.ie_a * 1e3) }} mA</td></tr>
+          </tbody>
+        </table>
+
+        <div class="status-box {{ result.region }}">
+          {% if result.region == "active" %}
+          <strong>Active region approximation OK</strong>
+          <p>VCE = {{ "%.2f"|format(result.vce) }} V &gt; 0.2 V (transistor in active region)</p>
+          {% elif result.region == "cutoff" %}
+          <strong>Cutoff region</strong>
+          {% for warning in result.warnings %}<p>{{ warning }}</p>{% endfor %}
+          {% else %}
+          <strong>Saturation region</strong>
+          {% for warning in result.warnings %}<p>{{ warning }}</p>{% endfor %}
+          {% endif %}
+        </div>
+
+        <p class="cross-check">
+          {% if result.cross_check_ok is none %}
+          Independent check: N/A (cutoff)
+          {% elif result.cross_check_ok %}
+          Independent check: PASS (ΔVCE = {{ "%.6f"|format(result.cross_check_delta_vce) }} V)
+          {% else %}
+          Independent check: FAIL (ΔVCE = {{ "%.6f"|format(result.cross_check_delta_vce) }} V)
+          {% endif %}
+        </p>
+        {% else %}
+        <p class="empty">Enter values and calculate the DC bias point.</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="goal-banner">
+      <div class="goal-title"><span class="icon" aria-hidden="true">◎</span> Week 2 Goal</div>
+      <p>Rough target for this lab: Build a Flask web app that takes the circuit parameters,
+        computes the BJT DC bias (VB, VE, VC, VCE, IB, IC, IE) for a common-emitter amplifier
+        with voltage-divider bias, and displays the results.</p>
+    </section>
+  </main>
+</body>
+</html>
