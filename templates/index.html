@@ -42,7 +42,7 @@
     <section class="dashboard">
       <div class="card inputs-card">
         <h2><span class="icon" aria-hidden="true">⚙</span> Input Parameters</h2>
-        <form method="post" class="input-form">
+        <form method="post" class="input-form" novalidate>
           {% for field in fields %}
           <div class="input-row">
             <label for="{{ field }}">{{ labels[field] }}</label>

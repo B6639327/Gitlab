@@ -55,11 +55,18 @@ def test_valid_post_shows_operating_point_and_cross_check(client):
     assert "Independent check: PASS" in text
 
 
+def test_form_defers_validation_to_server(client):
+    text = client.get("/").get_data(as_text=True)
+
+    assert "novalidate" in text
+
+
 def test_validation_error_is_shown_and_value_preserved(client):
     data = {**DEFAULTS, "r1": "-5"}
     response = client.post("/", data=data)
     text = response.get_data(as_text=True)
 
+    assert response.status_code == 200
     assert "R1 must be greater than 0 kΩ" in text
     assert 'value="-5"' in text
 
@@ -69,6 +76,7 @@ def test_blank_field_shows_parse_error(client):
     response = client.post("/", data=data)
     text = response.get_data(as_text=True)
 
+    assert response.status_code == 200
     assert "Please enter a valid number." in text
 
 
@@ -77,5 +85,46 @@ def test_non_numeric_field_shows_parse_error_and_preserves_value(client):
     response = client.post("/", data=data)
     text = response.get_data(as_text=True)
 
+    assert response.status_code == 200
     assert "Please enter a valid number." in text
     assert 'value="abc"' in text
+
+
+def test_vbe_at_or_above_vcc_is_rejected(client):
+    data = {**DEFAULTS, "vbe": "13"}
+    response = client.post("/", data=data)
+    text = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert "VBE must be between 0 and VCC" in text
+    assert "Active region approximation OK" not in text
+    assert "Cutoff region" not in text
+
+
+def test_cutoff_post_shows_cutoff_status(client):
+    data = {**DEFAULTS, "r2": "4.7", "rc": "4.7"}
+    response = client.post("/", data=data)
+    text = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert "Cutoff region" in text
+    assert "Independent check: N/A (cutoff)" in text
+    assert "Active region approximation OK" not in text
+
+
+def test_saturation_post_shows_saturation_status(client):
+    data = {
+        **DEFAULTS,
+        "r1": "68",
+        "r2": "100",
+        "rc": "0.6",
+        "re": "0.1",
+        "beta": "150",
+    }
+    response = client.post("/", data=data)
+    text = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert "Saturation region" in text
+    assert "Independent check: PASS" in text
+    assert "Active region approximation OK" not in text
