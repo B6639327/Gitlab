@@ -1,0 +1,117 @@
+"""BJT common-emitter DC bias engineering calculations.
+
+Inputs use kΩ for resistors; the module converts to ohms internally and
+returns SI units (amperes and volts). This module must never import Flask.
+"""
+
+from __future__ import annotations
+
+import math
+from dataclasses import dataclass
+
+VCE_SAT = 0.2
+
+PARSE_MESSAGE = "Please enter a valid number."
+
+MESSAGES = {
+    "vcc": "VCC must be greater than 0 V",
+    "r1": "R1 must be greater than 0 kΩ",
+    "r2": "R2 must be greater than 0 kΩ",
+    "rc": "RC must be greater than 0 kΩ",
+    "re": "RE must be greater than 0 kΩ",
+    "beta": "beta must be greater than 0",
+    "vbe": "VBE must be between 0 and VCC",
+}
+
+
+@dataclass(frozen=True)
+class BiasInputs:
+    vcc: float
+    r1: float
+    r2: float
+    rc: float
+    re: float
+    beta: float
+    vbe: float
+
+
+@dataclass(frozen=True)
+class BiasResult:
+    ib_a: float
+    ic_a: float
+    ie_a: float
+    vb: float
+    vc: float
+    ve: float
+    vce: float
+    region: str
+    warnings: tuple[str, ...]
+    cross_check_ok: bool | None
+    cross_check_delta_vce: float | None
+
+
+def validate_inputs(inputs: BiasInputs) -> dict[str, str]:
+    """Return field-name to English-message errors; empty when valid."""
+    errors: dict[str, str] = {}
+
+    positive_rules = (
+        ("vcc", inputs.vcc),
+        ("r1", inputs.r1),
+        ("r2", inputs.r2),
+        ("rc", inputs.rc),
+        ("re", inputs.re),
+        ("beta", inputs.beta),
+    )
+    for name, value in positive_rules:
+        if not math.isfinite(value):
+            errors[name] = PARSE_MESSAGE
+        elif value <= 0:
+            errors[name] = MESSAGES[name]
+
+    if not math.isfinite(inputs.vbe):
+        errors["vbe"] = PARSE_MESSAGE
+    elif not math.isfinite(inputs.vcc) or inputs.vcc <= 0:
+        if inputs.vbe <= 0:
+            errors["vbe"] = MESSAGES["vbe"]
+    elif not 0 < inputs.vbe < inputs.vcc:
+        errors["vbe"] = MESSAGES["vbe"]
+
+    return errors
+
+
+def calculate_bias(inputs: BiasInputs) -> BiasResult:
+    """Solve the voltage-divider bias point using the Thevenin method."""
+    errors = validate_inputs(inputs)
+    if errors:
+        raise ValueError("; ".join(errors.values()))
+
+    r1 = inputs.r1 * 1000.0
+    r2 = inputs.r2 * 1000.0
+    rc = inputs.rc * 1000.0
+    re = inputs.re * 1000.0
+
+    vbb = inputs.vcc * r2 / (r1 + r2)
+    rb = r1 * r2 / (r1 + r2)
+
+    ib = (vbb - inputs.vbe) / (rb + (inputs.beta + 1.0) * re)
+    ic = inputs.beta * ib
+    ie = (inputs.beta + 1.0) * ib
+
+    ve = ie * re
+    vb = ve + inputs.vbe
+    vc = inputs.vcc - ic * rc
+    vce = vc - ve
+
+    return BiasResult(
+        ib_a=ib,
+        ic_a=ic,
+        ie_a=ie,
+        vb=vb,
+        vc=vc,
+        ve=ve,
+        vce=vce,
+        region="active",
+        warnings=(),
+        cross_check_ok=None,
+        cross_check_delta_vce=None,
+    )
