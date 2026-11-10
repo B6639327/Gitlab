@@ -96,6 +96,32 @@ def _classify_region(vbb: float, vbe: float, vce: float) -> str:
     return "active"
 
 
+def _nodal_solve(inputs: BiasInputs) -> tuple[float, float]:
+    """Solve the bias point with nodal KCL, independently of Thevenin."""
+    r1 = inputs.r1 * 1000.0
+    r2 = inputs.r2 * 1000.0
+    rc = inputs.rc * 1000.0
+    re = inputs.re * 1000.0
+
+    a00 = 1.0 / r1 + 1.0 / r2
+    a01 = 1.0 / ((inputs.beta + 1.0) * re)
+    a10 = 1.0
+    a11 = -1.0
+    b0 = inputs.vcc / r1
+    b1 = inputs.vbe
+
+    det = a00 * a11 - a01 * a10
+    vb = (b0 * a11 - a01 * b1) / det
+    ve = (a00 * b1 - b0 * a10) / det
+
+    ie = ve / re
+    ib = ie / (inputs.beta + 1.0)
+    ic = inputs.beta * ib
+    vc = inputs.vcc - ic * rc
+    vce = vc - ve
+    return ic, vce
+
+
 def calculate_bias(inputs: BiasInputs) -> BiasResult:
     """Solve the voltage-divider bias point using the Thevenin method."""
     errors = validate_inputs(inputs)
@@ -137,6 +163,10 @@ def calculate_bias(inputs: BiasInputs) -> BiasResult:
     region = _classify_region(vbb, inputs.vbe, vce)
     warnings = (SATURATION_WARNING,) if region == "saturation" else ()
 
+    nodal_ic, nodal_vce = _nodal_solve(inputs)
+    delta = nodal_vce - vce
+    cross_check_ok = abs(nodal_ic - ic) <= 1e-9 and abs(delta) <= 1e-6
+
     return BiasResult(
         ib_a=ib,
         ic_a=ic,
@@ -147,6 +177,6 @@ def calculate_bias(inputs: BiasInputs) -> BiasResult:
         vce=vce,
         region=region,
         warnings=warnings,
-        cross_check_ok=None,
-        cross_check_delta_vce=None,
+        cross_check_ok=cross_check_ok,
+        cross_check_delta_vce=delta,
     )

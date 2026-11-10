@@ -94,3 +94,29 @@ def test_region_boundaries():
     assert _classify_region(0.7, 0.7, 10.0) == "cutoff"
     assert _classify_region(2.0, 0.7, 0.2) == "saturation"
     assert _classify_region(2.0, 0.7, 0.2000001) == "active"
+
+
+import bjt
+
+
+def test_cross_check_agrees_for_active_result():
+    result = calculate_bias(BiasInputs(12, 100, 22, 4.7, 1, 150, 0.7))
+    assert result.cross_check_ok is True
+    assert result.cross_check_delta_vce == pytest.approx(0.0, abs=1e-6)
+
+
+def test_cross_check_agrees_for_saturated_result():
+    result = calculate_bias(BiasInputs(12, 68, 100, 0.6, 0.1, 150, 0.7))
+    assert result.cross_check_ok is True
+
+
+def test_cross_check_is_none_in_cutoff():
+    result = calculate_bias(BiasInputs(12, 100, 4.7, 4.7, 1, 150, 0.7))
+    assert result.cross_check_ok is None
+    assert result.cross_check_delta_vce is None
+
+
+def test_cross_check_detects_disagreement(monkeypatch):
+    monkeypatch.setattr(bjt, "_nodal_solve", lambda inputs: (0.5, 9.9))
+    result = calculate_bias(BiasInputs(12, 100, 22, 4.7, 1, 150, 0.7))
+    assert result.cross_check_ok is False
