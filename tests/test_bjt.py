@@ -51,3 +51,46 @@ def test_validate_accepts_textbook_inputs():
 def test_calculate_bias_raises_on_invalid_inputs():
     with pytest.raises(ValueError):
         calculate_bias(BiasInputs(12, 100, 22, 4.7, 0, 150, 0.7))
+
+
+from bjt import _classify_region
+
+
+def test_cutoff_returns_zero_currents_and_no_cross_check():
+    result = calculate_bias(BiasInputs(12, 100, 4.7, 4.7, 1, 150, 0.7))
+
+    assert result.region == "cutoff"
+    assert result.ib_a == 0.0
+    assert result.ic_a == 0.0
+    assert result.ie_a == 0.0
+    assert result.ve == 0.0
+    assert result.vb == pytest.approx(0.538681948424, rel=1e-9)
+    assert result.vc == pytest.approx(12.0)
+    assert result.vce == pytest.approx(12.0)
+    assert result.cross_check_ok is None
+    assert "Cutoff" in result.warnings[0]
+
+
+def test_boundary_vbb_equals_vbe_is_cutoff():
+    result = calculate_bias(BiasInputs(7, 90, 10, 4.7, 1, 150, 0.7))
+    assert result.region == "cutoff"
+
+
+def test_saturation_reports_values_and_warning():
+    result = calculate_bias(BiasInputs(12, 68, 100, 0.6, 0.1, 150, 0.7))
+
+    assert result.region == "saturation"
+    assert result.ib_a == pytest.approx(1.1592836946277098e-04, rel=1e-9)
+    assert result.ic_a == pytest.approx(1.7389255419415647e-02, rel=1e-9)
+    assert result.ie_a == pytest.approx(1.7505183788878418e-02, rel=1e-9)
+    assert result.vb == pytest.approx(2.4505183788878417, rel=1e-9)
+    assert result.vc == pytest.approx(1.5664467483506108, rel=1e-9)
+    assert result.ve == pytest.approx(1.7505183788878418, rel=1e-9)
+    assert result.vce == pytest.approx(-0.18407163053723097, rel=1e-9)
+    assert "Saturation" in result.warnings[0]
+
+
+def test_region_boundaries():
+    assert _classify_region(0.7, 0.7, 10.0) == "cutoff"
+    assert _classify_region(2.0, 0.7, 0.2) == "saturation"
+    assert _classify_region(2.0, 0.7, 0.2000001) == "active"

@@ -23,6 +23,15 @@ MESSAGES = {
     "vbe": "VBE must be between 0 and VCC",
 }
 
+CUTOFF_WARNING = (
+    "Cutoff: VBB <= VBE — transistor is off (IC ~ 0); "
+    "active-region equations do not apply."
+)
+SATURATION_WARNING = (
+    "Saturation: VCE <= 0.2 V — values are approximate; "
+    "the linear active-region model does not apply."
+)
+
 
 @dataclass(frozen=True)
 class BiasInputs:
@@ -79,6 +88,14 @@ def validate_inputs(inputs: BiasInputs) -> dict[str, str]:
     return errors
 
 
+def _classify_region(vbb: float, vbe: float, vce: float) -> str:
+    if vbb <= vbe:
+        return "cutoff"
+    if vce <= VCE_SAT:
+        return "saturation"
+    return "active"
+
+
 def calculate_bias(inputs: BiasInputs) -> BiasResult:
     """Solve the voltage-divider bias point using the Thevenin method."""
     errors = validate_inputs(inputs)
@@ -93,6 +110,21 @@ def calculate_bias(inputs: BiasInputs) -> BiasResult:
     vbb = inputs.vcc * r2 / (r1 + r2)
     rb = r1 * r2 / (r1 + r2)
 
+    if vbb <= inputs.vbe:
+        return BiasResult(
+            ib_a=0.0,
+            ic_a=0.0,
+            ie_a=0.0,
+            vb=vbb,
+            vc=inputs.vcc,
+            ve=0.0,
+            vce=inputs.vcc,
+            region="cutoff",
+            warnings=(CUTOFF_WARNING,),
+            cross_check_ok=None,
+            cross_check_delta_vce=None,
+        )
+
     ib = (vbb - inputs.vbe) / (rb + (inputs.beta + 1.0) * re)
     ic = inputs.beta * ib
     ie = (inputs.beta + 1.0) * ib
@@ -102,6 +134,9 @@ def calculate_bias(inputs: BiasInputs) -> BiasResult:
     vc = inputs.vcc - ic * rc
     vce = vc - ve
 
+    region = _classify_region(vbb, inputs.vbe, vce)
+    warnings = (SATURATION_WARNING,) if region == "saturation" else ()
+
     return BiasResult(
         ib_a=ib,
         ic_a=ic,
@@ -110,8 +145,8 @@ def calculate_bias(inputs: BiasInputs) -> BiasResult:
         vc=vc,
         ve=ve,
         vce=vce,
-        region="active",
-        warnings=(),
+        region=region,
+        warnings=warnings,
         cross_check_ok=None,
         cross_check_delta_vce=None,
     )
