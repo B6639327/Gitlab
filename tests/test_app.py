@@ -27,9 +27,9 @@ def test_get_renders_layout_sections_and_all_inputs(client):
 
     assert response.status_code == 200
     assert "Input Parameters" in text
-    assert "Circuit: Common-Emitter Amplifier" in text
+    assert "Circuit: Voltage Divider Bias" in text
     assert "DC Bias Results" in text
-    assert "Week 2 Goal" in text
+    assert "Lab 03 Goal" in text
     for name in DEFAULTS:
         assert f'name="{name}"' in text
 

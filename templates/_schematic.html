@@ -1,11 +1,12 @@
 <svg class="schematic" viewBox="0 0 360 330" role="img"
-     aria-label="Common-emitter amplifier with voltage-divider bias">
+     aria-label="Common-emitter amplifier ({{ mode_labels[active_mode] }})">
   <!-- VCC rail -->
   <line class="wire" x1="50" y1="30" x2="310" y2="30"></line>
   <circle class="node" cx="90" cy="30" r="3"></circle>
   <circle class="node" cx="280" cy="30" r="3"></circle>
   <text class="value-label" x="180" y="19" text-anchor="middle">VCC = {{ circuit.vcc }} V</text>
 
+  {% if active_mode == 'divider' %}
   <!-- R1: rail to base node -->
   <line class="wire" x1="90" y1="30" x2="90" y2="70"></line>
   <rect class="resistor" x="80" y="70" width="20" height="52" rx="3"></rect>
@@ -23,6 +24,22 @@
   <line class="wire" x1="90" y1="252" x2="90" y2="292"></line>
   <text class="component-label" x="70" y="220" text-anchor="end">R2</text>
   <text class="value-label" x="70" y="237" text-anchor="end">{{ circuit.r2 }} kΩ</text>
+
+  <!-- R2 Ground -->
+  <g class="ground">
+    <line x1="76" y1="292" x2="104" y2="292"></line>
+    <line x1="82" y1="297" x2="98" y2="297"></line>
+    <line x1="87" y1="302" x2="93" y2="302"></line>
+  </g>
+  {% else %}
+  <!-- RB: rail to base node (Fixed Bias & Emitter Bias) -->
+  <line class="wire" x1="90" y1="30" x2="90" y2="75"></line>
+  <rect class="resistor" x="80" y="75" width="20" height="56" rx="3"></rect>
+  <line class="wire" x1="90" y1="131" x2="90" y2="180"></line>
+  <line class="wire" x1="90" y1="180" x2="174" y2="180"></line>
+  <text class="component-label" x="70" y="98" text-anchor="end">RB</text>
+  <text class="value-label" x="70" y="115" text-anchor="end">{{ circuit.rb }} kΩ</text>
+  {% endif %}
 
   <!-- RC: rail to collector -->
   <line class="wire" x1="280" y1="30" x2="280" y2="70"></line>
@@ -42,18 +59,21 @@
   <text class="component-label" x="225" y="176">NPN</text>
   <text class="value-label" x="225" y="192">β = {{ circuit.beta }}</text>
 
-  <!-- RE: emitter to ground -->
+  {% if active_mode == 'fixed' %}
+  <!-- Direct Emitter to Ground -->
+  <line class="wire" x1="200" y1="206" x2="200" y2="300"></line>
+  <text class="value-label" x="215" y="258">Direct Ground</text>
+  {% else %}
+  <!-- RE: emitter to ground (Divider & Emitter Bias) -->
   <line class="wire" x1="200" y1="206" x2="200" y2="240"></line>
   <rect class="resistor" x="190" y="240" width="20" height="52" rx="3"></rect>
   <line class="wire" x1="200" y1="292" x2="200" y2="300"></line>
   <text class="component-label" x="220" y="258">RE</text>
   <text class="value-label" x="220" y="275">{{ circuit.re }} kΩ</text>
+  {% endif %}
 
-  <!-- Ground symbols -->
+  <!-- Emitter Ground -->
   <g class="ground">
-    <line x1="76" y1="292" x2="104" y2="292"></line>
-    <line x1="82" y1="297" x2="98" y2="297"></line>
-    <line x1="87" y1="302" x2="93" y2="302"></line>
     <line x1="186" y1="300" x2="214" y2="300"></line>
     <line x1="192" y1="305" x2="208" y2="305"></line>
     <line x1="197" y1="310" x2="203" y2="310"></line>

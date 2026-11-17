@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lab 02: BJT DC Bias Web App</title>
+  <title>Lab 03: BJT DC Bias Web App</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -29,8 +29,8 @@
           <rect x="18" y="18" width="12" height="12" rx="2" fill="#d9f3ef"></rect>
         </svg>
         <div>
-          <h1>Lab 02: BJT DC Bias Web App</h1>
-          <p class="subtitle">ENG29 2121 – Common Emitter (Voltage Divider Bias)</p>
+          <h1>Lab 03: BJT DC Bias Web App</h1>
+          <p class="subtitle">ENG29 2121 – Common Emitter ({{ mode_labels[active_mode] }})</p>
         </div>
       </div>
       <div class="course-badge">
@@ -43,6 +43,34 @@
       <div class="card inputs-card">
         <h2><span class="icon" aria-hidden="true">⚙</span> Input Parameters</h2>
         <form method="post" class="input-form" novalidate>
+          <div class="input-row">
+            <label for="mode">Bias Circuit Topology</label>
+            <div class="input-control" style="gap: 4px;">
+              <select id="mode" name="mode" onchange="document.getElementById('mode-switch').click();"
+                      style="width:100%; padding:8px; border:1px solid #cbd8e6; border-radius:8px; background:#fbfdff; font:inherit; font-size:0.88rem;">
+                {% for m in valid_modes %}
+                <option value="{{ m }}" {% if mode == m %}selected{% endif %}>{{ mode_labels[m] }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" id="mode-switch" name="action" value="switch_mode"
+                      title="Load the form for the selected topology"
+                      style="flex: 0 0 auto; padding: 8px 10px; font-size: 0.78rem; border-radius: 8px; border: 1px solid #0f766e; background: #ffffff; color: #0f766e; cursor: pointer;">Load</button>
+            </div>
+            {% if errors['mode'] %}
+            <p class="field-error">{{ errors['mode'] }}</p>
+            {% endif %}
+          </div>
+
+          <div style="margin-bottom: 12px; display: flex; gap: 6px; flex-wrap: wrap;">
+            {% for m in valid_modes %}
+            <button type="submit" name="action" value="switch_mode"
+                    onclick="document.getElementById('mode').value='{{ m }}';"
+                    style="padding: 4px 9px; font-size: 0.78rem; border-radius: 6px; border: 1px solid #0f766e; cursor: pointer; background: {{ '#0f766e' if active_mode == m else '#ffffff' }}; color: {{ '#ffffff' if active_mode == m else '#0f766e' }};">
+              {{ mode_labels[m] }}
+            </button>
+            {% endfor %}
+          </div>
+
           {% for field in fields %}
           <div class="input-row">
             <label for="{{ field }}">{{ labels[field] }}</label>
@@ -56,20 +84,22 @@
             {% endif %}
           </div>
           {% endfor %}
-          <button type="submit" class="calculate-button">Calculate DC Bias</button>
+
+          <button type="submit" name="action" value="calculate" class="calculate-button">Calculate DC Bias</button>
         </form>
       </div>
 
       <div class="card circuit-card">
-        <h2><span class="icon" aria-hidden="true">⌁</span> Circuit: Common-Emitter Amplifier</h2>
+        <h2><span class="icon" aria-hidden="true">⌁</span> Circuit: {{ mode_labels[active_mode] }}</h2>
         {% include "_schematic.html" %}
       </div>
 
       <div class="card results-card">
-        <h2><span class="icon" aria-hidden="true">▥</span> DC Bias Results</h2>
+        <h2><span class="icon" aria-hidden="true">▥</span> DC Bias Results ({{ mode_labels[active_mode] }})</h2>
         {% if result %}
         <table class="results-table">
           <tbody>
+            <tr><th>Mode</th><td>{{ mode_labels[result.mode] }}</td></tr>
             <tr><th>V<sub>B</sub></th><td>{{ "%.2f"|format(result.vb) }} V</td></tr>
             <tr><th>V<sub>E</sub></th><td>{{ "%.2f"|format(result.ve) }} V</td></tr>
             <tr><th>V<sub>C</sub></th><td>{{ "%.2f"|format(result.vc) }} V</td></tr>
@@ -83,7 +113,7 @@
         <div class="status-box {{ result.region }}">
           {% if result.region == "active" %}
           <strong>Active region approximation OK</strong>
-          <p>VCE = {{ "%.2f"|format(result.vce) }} V &gt; 0.2 V (transistor in active region)</p>
+          <p>VCE = {{ "%.2f"|format(result.vce) }} V > 0.2 V (transistor in active region)</p>
           {% elif result.region == "cutoff" %}
           <strong>Cutoff region</strong>
           {% for warning in result.warnings %}<p>{{ warning }}</p>{% endfor %}
@@ -103,16 +133,16 @@
           {% endif %}
         </p>
         {% else %}
-        <p class="empty">Enter values and calculate the DC bias point.</p>
+        <p class="empty">Invalid input for {{ mode_labels[active_mode] }}. Fix highlighted fields and recalculate.</p>
         {% endif %}
       </div>
     </section>
 
     <section class="goal-banner">
-      <div class="goal-title"><span class="icon" aria-hidden="true">◎</span> Week 2 Goal</div>
-      <p>Rough target for this lab: Build a Flask web app that takes the circuit parameters,
-        computes the BJT DC bias (VB, VE, VC, VCE, IB, IC, IE) for a common-emitter amplifier
-        with voltage-divider bias, and displays the results.</p>
+      <div class="goal-title"><span class="icon" aria-hidden="true">◎</span> Lab 03 Goal</div>
+      <p>Single Flask web app supporting three single-supply NPN BJT DC bias topologies:
+        <strong>Voltage Divider Bias</strong>, <strong>Fixed Bias</strong>, and <strong>Emitter Bias</strong>,
+        with mode-specific inputs, validation, and browser acceptance testing (A1–A5).</p>
     </section>
   </main>
 </body>
