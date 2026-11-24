@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 04: BJT Amplifier Simulator v1</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .mode-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; background: #f0f6fa; padding: 10px 12px; border-radius: 10px; border: 1px solid #d0e0ea; }
+    .mode-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 165px; }
+    .mode-group label { font-size: 0.78rem; font-weight: 700; color: #103658; }
+    .mode-group select { padding: 6px 8px; border-radius: 6px; border: 1px solid #9cb4c4; font-size: 0.85rem; background: #fff; color: #17344b; }
+    .spice-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; }
+    .spice-badge.ok { background: #e6f6f2; color: #0b695e; border: 1px solid #9ad3c7; }
+    .spice-badge.err { background: #fff1eb; color: #9c3d19; border: 1px solid #e7b5a1; }
+    .spice-badge.na { background: #eef2f6; color: #486275; border: 1px solid #cbd5e1; }
+    .section-divider { border: 0; border-top: 1px solid #dce7ee; margin: 14px 0; }
+    .sub-heading { font-size: 0.82rem; font-weight: 700; color: #103658; margin: 0 0 8px; }
+    .chart-box { position: relative; width: 100%; height: 215px; margin-top: 12px; background: #fcfefe; border: 1px solid #dce7ee; border-radius: 10px; padding: 8px; }
+    .provenance-tag { font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #0f766e; display: block; margin-bottom: 6px; }
+    details.netlist-box { margin-top: 12px; font-size: 0.8rem; border: 1px solid #dce7ee; border-radius: 8px; padding: 8px 10px; background: #f8fbfd; }
+    details.netlist-box summary { cursor: pointer; font-weight: 600; color: #14415f; }
+    details.netlist-box pre { white-space: pre-wrap; margin: 8px 0 0; font-size: 0.75rem; color: #25465d; max-height: 220px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <div class="brand">
+        <svg class="chip-icon" viewBox="0 0 48 48" aria-hidden="true">
+          <g stroke="#0f766e" stroke-width="2" stroke-linecap="round">
+            <line x1="16" y1="4" x2="16" y2="11"></line>
+            <line x1="24" y1="4" x2="24" y2="11"></line>
+            <line x1="32" y1="4" x2="32" y2="11"></line>
+            <line x1="16" y1="37" x2="16" y2="44"></line>
+            <line x1="24" y1="37" x2="24" y2="44"></line>
+            <line x1="32" y1="37" x2="32" y2="44"></line>
+            <line x1="4" y1="16" x2="11" y2="16"></line>
+            <line x1="4" y1="24" x2="11" y2="24"></line>
+            <line x1="4" y1="32" x2="11" y2="32"></line>
+            <line x1="37" y1="16" x2="44" y2="16"></line>
+            <line x1="37" y1="24" x2="44" y2="24"></line>
+            <line x1="37" y1="32" x2="44" y2="32"></line>
+          </g>
+          <rect x="11" y="11" width="26" height="26" rx="5" fill="#0f766e"></rect>
+          <rect x="18" y="18" width="12" height="12" rx="2" fill="#d9f3ef"></rect>
+        </svg>
+        <div>
+          <h1>Lab 04: BJT Amplifier Simulator v1</h1>
+          <p class="subtitle">ENG29 2121 – Common Emitter (Analytical DC Bias + Real ngspice)</p>
+        </div>
+      </div>
+      <div class="course-badge">
+        <span class="code-icon" aria-hidden="true">&lt;/&gt;</span>
+        Computer Programming for Electrical Engineers
+      </div>
+    </header>
+
+    <section class="dashboard">
+      <!-- LEFT: INPUT FORM -->
+      <div class="card inputs-card">
+        <h2><span class="icon" aria-hidden="true">⚙</span> Input Parameters</h2>
+        <form method="post" class="input-form" novalidate>
+          <div class="mode-bar">
+            <div class="mode-group">
+              <label for="bias_mode">Bias Topology</label>
+              <select id="bias_mode" name="bias_mode">
+                <option value="voltage_divider" {% if bias_mode == 'voltage_divider' %}selected{% endif %}>Voltage Divider CE (Analytical + SPICE)</option>
+                <option value="fixed" {% if bias_mode == 'fixed' %}selected{% endif %}>Fixed Bias (Analytical Only)</option>
+                <option value="emitter" {% if bias_mode == 'emitter' %}selected{% endif %}>Emitter Bias (Analytical Only)</option>
+              </select>
+            </div>
+            <div class="mode-group">
+              <label for="analysis_mode">SPICE Analysis Mode</label>
+              <select id="analysis_mode" name="analysis_mode">
+                <option value="op" {% if analysis_mode == 'op' %}selected{% endif %}>DC Operating Point (.op)</option>
+                <option value="ac" {% if analysis_mode == 'ac' %}selected{% endif %}>AC Frequency Response (.ac)</option>
+                <option value="tran" {% if analysis_mode == 'tran' %}selected{% endif %}>Transient Waveform (.tran)</option>
+              </select>
+            </div>
+          </div>
+
+          {% for field in dc_fields %}
+          <div class="input-row">
+            <label for="{{ field }}">{{ labels[field] }}</label>
+            <div class="input-control">
+              <input id="{{ field }}" name="{{ field }}" value="{{ values[field] }}"
+                     type="number" step="any" required>
+              <span class="unit">{{ units[field] }}</span>
+            </div>
+            {% if errors[field] %}
+            <p class="field-error">{{ errors[field] }}</p>
+            {% endif %}
+          </div>
+          {% endfor %}
+
+          <hr class="section-divider">
+          <p class="sub-heading">AC / Transient Coupling &amp; Source (CE Voltage Divider)</p>
+
+          {% for field in spice_fields %}
+          <div class="input-row">
+            <label for="{{ field }}">{{ labels[field] }}</label>
+            <div class="input-control">
+              <input id="{{ field }}" name="{{ field }}" value="{{ values[field] }}"
+                     type="number" step="any" required>
+              <span class="unit">{{ units[field] }}</span>
+            </div>
+            {% if errors[field] %}
+            <p class="field-error">{{ errors[field] }}</p>
+            {% endif %}
+          </div>
+          {% endfor %}
+
+          <button type="submit" class="calculate-button">Run Simulation &amp; Calculate</button>
+        </form>
+      </div>
+
+      <!-- CENTER: SCHEMATIC & SPICE PLOTS -->
+      <div class="card circuit-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid #e8eff7;">
+          <h2 style="margin:0; padding:0; border:0;"><span class="icon" aria-hidden="true">⌁</span> Circuit: Common-Emitter Amplifier</h2>
+          {% if spice_result and spice_result.status == 'success' %}
+            <span class="spice-badge ok">Engine: ngspice · PASS ({{ spice_result.model }})</span>
+          {% elif spice_result and spice_result.status == 'error' %}
+            <span class="spice-badge err">Engine: ngspice · ERROR</span>
+          {% else %}
+            <span class="spice-badge na">Engine: Analytical Only</span>
+          {% endif %}
+        </div>
+
+        {% include "_schematic.html" %}
+
+        {% if bias_mode != 'voltage_divider' %}
+          <div class="status-box" style="background:#f3f7fa; border:1px solid #cbd8e6; color:#334e68; margin-top:12px;">
+            <strong>SPICE Simulation Disabled for This Topology</strong>
+            <p>Select <em>Voltage Divider CE</em> to execute real ngspice (.op / .ac / .tran) simulations.</p>
+          </div>
+        {% elif spice_result and spice_result.status == 'error' %}
+          <div class="status-box saturation" style="margin-top:12px;">
+            <strong>ngspice Simulation Error</strong>
+            <p>{{ spice_result.error }}</p>
+          </div>
+        {% elif spice_result and spice_result.status == 'success' %}
+          {% if spice_result.mode == 'ac' %}
+            <div class="chart-box"><canvas id="acGainChart"></canvas></div>
+            <div class="chart-box"><canvas id="acPhaseChart"></canvas></div>
+          {% elif spice_result.mode == 'tran' %}
+            <div class="chart-box"><canvas id="tranVinChart"></canvas></div>
+            <div class="chart-box"><canvas id="tranVoutChart"></canvas></div>
+          {% else %}
+            <div class="status-box active" style="margin-top:12px;">
+              <strong>ngspice .op Run Completed</strong>
+              <p>Switch <em>SPICE Analysis Mode</em> to <b>AC (.ac)</b> or <b>Transient (.tran)</b> to view plots.</p>
+            </div>
+          {% endif %}
+
+          {% if spice_result.netlist %}
+          <details class="netlist-box">
+            <summary>Inspect Generated Netlist &amp; ngspice Log</summary>
+            <pre>{{ spice_result.netlist }}</pre>
+            {% if spice_result.log %}<pre>{{ spice_result.log }}</pre>{% endif %}
+          </details>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      <!-- RIGHT: RESULTS -->
+      <div class="card results-card">
+        <h2><span class="icon" aria-hidden="true">▥</span> DC Bias Results</h2>
+
+        {% if spice_result and spice_result.status == 'success' %}
+        <span class="provenance-tag">SPICE Simulation Output ({{ spice_result.engine }} · {{ spice_result.model }})</span>
+        {% if spice_result.mode == 'op' %}
+        <table class="results-table" style="margin-bottom:14px;">
+          <tbody>
+            <tr><th>V<sub>B</sub> (SPICE)</th><td>{{ "%.3f"|format(spice_result.vb) }} V</td></tr>
+            <tr><th>V<sub>E</sub> (SPICE)</th><td>{{ "%.3f"|format(spice_result.ve) }} V</td></tr>
+            <tr><th>V<sub>C</sub> (SPICE)</th><td>{{ "%.3f"|format(spice_result.vc) }} V</td></tr>
+            <tr><th>V<sub>CE</sub> (SPICE)</th><td>{{ "%.3f"|format(spice_result.vce) }} V</td></tr>
+            <tr><th>I<sub>C</sub> (SPICE)</th><td>{{ "%.2f"|format(spice_result.ic_ma) }} mA</td></tr>
+          </tbody>
+        </table>
+        {% elif spice_result.mode == 'ac' %}
+        <table class="results-table" style="margin-bottom:14px;">
+          <tbody>
+            <tr><th>Gain Reference</th><td>{{ spice_result.reference }}</td></tr>
+            <tr><th>Midband Gain</th><td>{{ "%.2f"|format(spice_result.midband_gain_db) }} dB</td></tr>
+            <tr><th>Lower Cutoff (f<sub>L</sub>)</th><td>{{ "%.1f Hz"|format(spice_result.fl_hz) if spice_result.fl_hz else "not determined in sweep range" }}</td></tr>
+            <tr><th>Upper Cutoff (f<sub>H</sub>)</th><td>{{ "%.2f kHz"|format(spice_result.fh_hz / 1000) if spice_result.fh_hz else "not determined in sweep range" }}</td></tr>
+          </tbody>
+        </table>
+        {% elif spice_result.mode == 'tran' %}
+        <table class="results-table" style="margin-bottom:14px;">
+          <tbody>
+            <tr><th>V<sub>in</sub> (pk-pk)</th><td>{{ "%.2f"|format(spice_result.vin_pp_mv) }} mV<sub>pp</sub></td></tr>
+            <tr><th>V<sub>out</sub> (pk-pk)</th><td>{{ "%.3f"|format(spice_result.vout_pp_v) }} V<sub>pp</sub></td></tr>
+            <tr><th>Phase Shift</th><td>Inverted (~180° CE amplifier)</td></tr>
+          </tbody>
+        </table>
+        {% endif %}
+        <hr class="section-divider">
+        {% endif %}
+
+        <span class="provenance-tag">Analytical DC Model (Python Reference · {{ bias_mode }})</span>
+        {% if result %}
+        <table class="results-table">
+          <tbody>
+            <tr><th>V<sub>B</sub></th><td>{{ "%.2f"|format(result.vb) }} V</td></tr>
+            <tr><th>V<sub>E</sub></th><td>{{ "%.2f"|format(result.ve) }} V</td></tr>
+            <tr><th>V<sub>C</sub></th><td>{{ "%.2f"|format(result.vc) }} V</td></tr>
+            <tr><th>V<sub>CE</sub></th><td>{{ "%.2f"|format(result.vce) }} V</td></tr>
+            <tr><th>I<sub>B</sub></th><td>{{ "%.1f"|format(result.ib_a * 1e6) }} µA</td></tr>
+            <tr><th>I<sub>C</sub></th><td>{{ "%.2f"|format(result.ic_a * 1e3) }} mA</td></tr>
+            <tr><th>I<sub>E</sub></th><td>{{ "%.2f"|format(result.ie_a * 1e3) }} mA</td></tr>
+          </tbody>
+        </table>
+
+        <div class="status-box {{ result.region }}">
+          {% if result.region == "active" %}
+          <strong>Active region approximation OK</strong>
+          <p>VCE = {{ "%.2f"|format(result.vce) }} V &gt; 0.2 V (transistor in active region)</p>
+          {% elif result.region == "cutoff" %}
+          <strong>Cutoff region</strong>
+          {% for warning in result.warnings %}<p>{{ warning }}</p>{% endfor %}
+          {% else %}
+          <strong>Saturation region</strong>
+          {% for warning in result.warnings %}<p>{{ warning }}</p>{% endfor %}
+          {% endif %}
+        </div>
+
+        <p class="cross-check">
+          {% if result.cross_check_ok is none %}
+          Independent check: N/A (cutoff)
+          {% elif result.cross_check_ok %}
+          Independent check: PASS (ΔVCE = {{ "%.6f"|format(result.cross_check_delta_vce) }} V)
+          {% else %}
+          Independent check: FAIL (ΔVCE = {{ "%.6f"|format(result.cross_check_delta_vce) }} V)
+          {% endif %}
+        </p>
+        {% else %}
+        <p class="empty">Enter values and calculate the DC bias point.</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="goal-banner">
+      <div class="goal-title"><span class="icon" aria-hidden="true">◎</span> Lab 04 Scope &amp; Provenance</div>
+      <p>Week 2 Goal preserved (3 analytical DC bias modes) + Lab 04 real <code>ngspice</code> integration (.op, .ac, .tran) for the reference Common-Emitter voltage-divider amplifier.</p>
+    </section>
+  </main>
+
+  {% if spice_result and spice_result.status == 'success' %}
+  <script>
+    const spiceData = {{ spice_result | tojson }};
+    if (spiceData.mode === 'ac') {
+      const labels = spiceData.freqs.map(f => f >= 1000 ? (f / 1000).toFixed(1) + 'k' : f.toFixed(0));
+      new Chart(document.getElementById('acGainChart'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{ label: 'Gain |Vout/Vin| (dB)', data: spiceData.gain_db, borderColor: '#0f766e', borderWidth: 2, pointRadius: 0 }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { title: { display: true, text: 'Frequency (Hz)' } },
+            y: { title: { display: true, text: 'Gain Magnitude (dB)' } }
+          }
+        }
+      });
+      new Chart(document.getElementById('acPhaseChart'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{ label: 'Phase ∠Vout (deg)', data: spiceData.phase_deg, borderColor: '#14415f', borderWidth: 2, pointRadius: 0 }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { title: { display: true, text: 'Frequency (Hz)' } },
+            y: { title: { display: true, text: 'Phase (degrees)' } }
+          }
+        }
+      });
+    } else if (spiceData.mode === 'tran') {
+      const labels = spiceData.time_ms.map(t => t.toFixed(2));
+      new Chart(document.getElementById('tranVinChart'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{ label: 'Vin (mV)', data: spiceData.vin_mv, borderColor: '#0f766e', borderWidth: 2, pointRadius: 0 }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { title: { display: true, text: 'Time (ms)' } },
+            y: { title: { display: true, text: 'Input Voltage Vin (mV)' } }
+          }
+        }
+      });
+      new Chart(document.getElementById('tranVoutChart'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{ label: 'Vout (V)', data: spiceData.vout_v, borderColor: '#b45309', borderWidth: 2, pointRadius: 0 }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { title: { display: true, text: 'Time (ms)' } },
+            y: { title: { display: true, text: 'Output Voltage Vout (V)' } }
+          }
+        }
+      });
+    }
+  </script>
+  {% endif %}
+</body>
+</html>

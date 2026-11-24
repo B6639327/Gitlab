@@ -1,0 +1,388 @@
+:root {
+  --teal-900: #0b5f59;
+  --teal-700: #0f766e;
+  --teal-500: #0d9488;
+  --ink: #213547;
+  --muted: #5b7186;
+  --line: #dbe5f0;
+  --page: #eef5fc;
+  --card: #ffffff;
+  --blue-soft: #e0f2fe;
+  --blue-line: #bae6fd;
+  --green-bg: #e8f7ee;
+  --green-line: #b7e4c7;
+  --green-ink: #14532d;
+  --amber-bg: #fff7e6;
+  --amber-line: #f5d08a;
+  --amber-ink: #7c4a03;
+  --red-bg: #fdecec;
+  --red-line: #f3b5b5;
+  --red-ink: #7f1d1d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  line-height: 1.45;
+}
+
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 26px 22px 34px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.chip-icon {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 auto;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+  letter-spacing: -0.02em;
+  color: #12344d;
+}
+
+.subtitle {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.course-badge {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--blue-soft);
+  border: 1px solid var(--blue-line);
+  color: #0f4c81;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  max-width: 290px;
+}
+
+.code-icon {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.9rem;
+  background: #ffffff;
+  border: 1px solid var(--blue-line);
+  border-radius: 6px;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr 1fr;
+  gap: 18px;
+  align-items: stretch;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 5px 18px rgba(15, 76, 129, 0.06);
+  min-width: 0;
+}
+
+.card h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e8eff7;
+  color: #14415f;
+  font-size: 1.04rem;
+}
+
+.icon {
+  color: var(--teal-700);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.input-row {
+  display: grid;
+  grid-template-columns: 1fr 128px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 11px;
+}
+
+.input-row label {
+  font-size: 0.88rem;
+  color: #2b4b63;
+}
+
+.input-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.input-control input {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid #cbd8e6;
+  border-radius: 8px;
+  background: #fbfdff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.92rem;
+}
+
+.input-control input:focus {
+  outline: 2px solid rgba(13, 148, 136, 0.35);
+  outline-offset: 1px;
+  border-color: var(--teal-500);
+}
+
+.unit {
+  min-width: 26px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.field-error {
+  grid-column: 1 / -1;
+  margin: -2px 0 4px;
+  color: #b42318;
+  font-size: 0.8rem;
+}
+
+.calculate-button {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--teal-700);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.calculate-button:hover {
+  background: var(--teal-900);
+}
+
+.circuit-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.schematic {
+  width: 100%;
+  height: auto;
+  max-height: 360px;
+  margin: auto 0;
+}
+
+.schematic .wire {
+  stroke: var(--teal-700);
+  stroke-width: 2;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.schematic .resistor {
+  fill: #ffffff;
+  stroke: var(--teal-700);
+  stroke-width: 2;
+}
+
+.schematic .node {
+  fill: var(--teal-700);
+}
+
+.schematic .device {
+  fill: #ffffff;
+  stroke: var(--teal-700);
+  stroke-width: 2;
+}
+
+.schematic .arrow {
+  fill: var(--teal-700);
+}
+
+.schematic .ground line {
+  stroke: var(--teal-700);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.schematic .component-label {
+  fill: #14415f;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.schematic .value-label {
+  fill: var(--muted);
+  font-size: 10.5px;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.94rem;
+}
+
+.results-table th {
+  text-align: left;
+  font-weight: 600;
+  color: #14415f;
+  padding: 9px 10px;
+  border-bottom: 1px solid #e8eff7;
+}
+
+.results-table td {
+  text-align: right;
+  font-weight: 700;
+  padding: 9px 10px;
+  border-bottom: 1px solid #e8eff7;
+  font-variant-numeric: tabular-nums;
+}
+
+.results-table tr:nth-child(even) {
+  background: #f7fbff;
+}
+
+.status-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 0.86rem;
+}
+
+.status-box strong {
+  font-size: 0.94rem;
+}
+
+.status-box p {
+  margin: 0;
+}
+
+.status-box.active {
+  background: var(--green-bg);
+  border: 1px solid var(--green-line);
+  color: var(--green-ink);
+}
+
+.status-box.cutoff {
+  background: var(--amber-bg);
+  border: 1px solid var(--amber-line);
+  color: var(--amber-ink);
+}
+
+.status-box.saturation {
+  background: var(--red-bg);
+  border: 1px solid var(--red-line);
+  color: var(--red-ink);
+}
+
+.cross-check {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  color: #4b6478;
+  font-size: 0.82rem;
+}
+
+.empty {
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.goal-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 16px 18px;
+  background: var(--blue-soft);
+  border: 1px solid var(--blue-line);
+  border-radius: 14px;
+}
+
+.goal-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  color: #0f4c81;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.goal-banner p {
+  margin: 0;
+  color: #24506e;
+  font-size: 0.87rem;
+}
+
+@media (max-width: 980px) {
+  .dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .course-badge {
+    max-width: none;
+  }
+
+  .goal-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 520px) {
+  .page {
+    padding: 18px 14px 26px;
+  }
+
+  .input-row {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+}

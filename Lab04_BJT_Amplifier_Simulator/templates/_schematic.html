@@ -1,0 +1,89 @@
+<svg class="schematic" viewBox="0 0 430 330" role="img"
+     aria-label="Common-emitter amplifier with voltage-divider bias">
+  <!-- VCC rail -->
+  <line class="wire" x1="85" y1="30" x2="320" y2="30"></line>
+  <circle class="node" cx="120" cy="30" r="3"></circle>
+  <circle class="node" cx="290" cy="30" r="3"></circle>
+  <text class="value-label" x="205" y="19" text-anchor="middle">VCC = {{ circuit.vcc }} V</text>
+
+  <!-- Vin + Cin -->
+  <circle class="device" cx="26" cy="222" r="14"></circle>
+  <path class="wire" d="M 18 222 Q 22 215, 26 222 T 34 222"></path>
+  <line class="wire" x1="26" y1="180" x2="26" y2="208"></line>
+  <line class="wire" x1="26" y1="236" x2="26" y2="292"></line>
+  <line class="wire" x1="26" y1="180" x2="58" y2="180"></line>
+  <line class="wire" x1="58" y1="166" x2="58" y2="194"></line>
+  <line class="wire" x1="68" y1="166" x2="68" y2="194"></line>
+  <line class="wire" x1="68" y1="180" x2="120" y2="180"></line>
+  <text class="component-label" x="63" y="156" text-anchor="middle">Cin</text>
+  <text class="value-label" x="63" y="207" text-anchor="middle">{{ circuit.cin }} µF</text>
+  <text class="value-label" x="26" y="252" text-anchor="middle">Vin</text>
+
+  <!-- R1: rail to base node -->
+  <line class="wire" x1="120" y1="30" x2="120" y2="70"></line>
+  <rect class="resistor" x="110" y="70" width="20" height="52" rx="3"></rect>
+  <line class="wire" x1="120" y1="122" x2="120" y2="180"></line>
+  <text class="component-label" x="102" y="90" text-anchor="end">R1</text>
+  <text class="value-label" x="102" y="107" text-anchor="end">{{ circuit.r1 }} kΩ</text>
+
+  <!-- Base node and base lead -->
+  <circle class="node" cx="120" cy="180" r="3"></circle>
+  <line class="wire" x1="120" y1="180" x2="194" y2="180"></line>
+
+  <!-- R2: base node to ground -->
+  <line class="wire" x1="120" y1="180" x2="120" y2="200"></line>
+  <rect class="resistor" x="110" y="200" width="20" height="52" rx="3"></rect>
+  <line class="wire" x1="120" y1="252" x2="120" y2="292"></line>
+  <text class="component-label" x="102" y="220" text-anchor="end">R2</text>
+  <text class="value-label" x="102" y="237" text-anchor="end">{{ circuit.r2 }} kΩ</text>
+
+  <!-- RC: rail to collector -->
+  <line class="wire" x1="290" y1="30" x2="290" y2="70"></line>
+  <rect class="resistor" x="280" y="70" width="20" height="52" rx="3"></rect>
+  <line class="wire" x1="290" y1="122" x2="290" y2="145"></line>
+  <line class="wire" x1="290" y1="145" x2="220" y2="145"></line>
+  <line class="wire" x1="220" y1="145" x2="220" y2="154"></line>
+  <circle class="node" cx="290" cy="145" r="3"></circle>
+  <text class="component-label" x="308" y="90">RC</text>
+  <text class="value-label" x="308" y="107">{{ circuit.rc }} kΩ</text>
+
+  <!-- Cout + RL -->
+  <line class="wire" x1="290" y1="145" x2="335" y2="145"></line>
+  <line class="wire" x1="335" y1="131" x2="335" y2="159"></line>
+  <line class="wire" x1="345" y1="131" x2="345" y2="159"></line>
+  <line class="wire" x1="345" y1="145" x2="385" y2="145"></line>
+  <line class="wire" x1="385" y1="145" x2="385" y2="195"></line>
+  <rect class="resistor" x="375" y="195" width="20" height="52" rx="3"></rect>
+  <line class="wire" x1="385" y1="247" x2="385" y2="292"></line>
+  <text class="component-label" x="340" y="122" text-anchor="middle">Cout</text>
+  <text class="value-label" x="340" y="172" text-anchor="middle">{{ circuit.cout }} µF</text>
+  <text class="component-label" x="402" y="216">RL</text>
+  <text class="value-label" x="402" y="232">{{ circuit.rl }} kΩ</text>
+  <text class="component-label" x="385" y="135" text-anchor="middle">Vout</text>
+
+  <!-- NPN transistor -->
+  <circle class="device" cx="210" cy="180" r="30"></circle>
+  <line class="wire" x1="194" y1="165" x2="194" y2="195"></line>
+  <line class="wire" x1="194" y1="169" x2="220" y2="154"></line>
+  <line class="wire" x1="194" y1="191" x2="220" y2="206"></line>
+  <polygon class="arrow" points="220,206 210,203 215,196"></polygon>
+  <text class="component-label" x="245" y="166">Q1</text>
+  <text class="component-label" x="245" y="182">NPN</text>
+  <text class="value-label" x="245" y="198">β = {{ circuit.beta }}</text>
+
+  <!-- RE: emitter to ground -->
+  <line class="wire" x1="220" y1="206" x2="220" y2="232"></line>
+  <rect class="resistor" x="210" y="232" width="20" height="46" rx="3"></rect>
+  <line class="wire" x1="220" y1="278" x2="220" y2="292"></line>
+  <text class="component-label" x="238" y="252">RE</text>
+  <text class="value-label" x="238" y="268">{{ circuit.re }} kΩ</text>
+
+  <!-- Shared Ground rail & symbols -->
+  <line class="wire" x1="26" y1="292" x2="385" y2="292"></line>
+  <g class="ground">
+    <line x1="206" y1="300" x2="234" y2="300"></line>
+    <line x1="212" y1="305" x2="228" y2="305"></line>
+    <line x1="217" y1="310" x2="223" y2="310"></line>
+    <line class="wire" x1="220" y1="292" x2="220" y2="300"></line>
+  </g>
+</svg>
